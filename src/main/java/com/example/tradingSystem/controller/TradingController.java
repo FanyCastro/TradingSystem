@@ -1,12 +1,12 @@
-package com.example.trading_system.controller;
+package com.example.tradingSystem.controller;
 
-import com.example.trading_system.dto.OrderRequest;
-import com.example.trading_system.dto.OrderResponse;
-import com.example.trading_system.exception.TradingException;
-import com.example.trading_system.model.Instrument;
-import com.example.trading_system.model.Order;
-import com.example.trading_system.model.Trade;
-import com.example.trading_system.service.TradingService;
+import com.example.tradingSystem.dto.OrderRequest;
+import com.example.tradingSystem.dto.OrderResponse;
+import com.example.tradingSystem.exception.TradingException;
+import com.example.tradingSystem.model.Instrument;
+import com.example.tradingSystem.model.Order;
+import com.example.tradingSystem.model.Trade;
+import com.example.tradingSystem.service.TradingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

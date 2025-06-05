@@ -1,8 +1,7 @@
-package com.example.trading_system;
+package com.example.tradingSystem;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import com.example.trading_system.service.TradingService;
 
 @SpringBootApplication
 public class TradingSystemApplication {

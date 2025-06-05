@@ -1,8 +1,8 @@
-package com.example.trading_system.dto;
+package com.example.tradingSystem.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
-import com.example.trading_system.model.Order;
+import com.example.tradingSystem.model.Order;
 
 /**
  * DTO for placing a new order. Used as the request body in the REST API.

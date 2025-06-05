@@ -1,7 +1,7 @@
-package com.example.trading_system.service;
+package com.example.tradingSystem.service;
 
-import com.example.trading_system.model.Order;
-import com.example.trading_system.model.Trade;
+import com.example.tradingSystem.model.Order;
+import com.example.tradingSystem.model.Trade;
 
 import java.math.BigDecimal;
 import java.util.*;

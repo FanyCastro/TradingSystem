@@ -141,6 +141,8 @@
 						<exclude>**/*Record.class</exclude>
 						<!-- Exclude generated classes -->
 						<exclude>**/generated/**</exclude>
+						<!-- Exclude application classes -->
+						<exclude>**/*Application*</exclude>
 					</excludes>
 					<rules>
 						<rule>

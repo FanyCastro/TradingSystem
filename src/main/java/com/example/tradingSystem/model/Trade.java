@@ -1,4 +1,4 @@
-package com.example.trading_system.model;
+package com.example.tradingSystem.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;

@@ -1,4 +1,4 @@
-package com.example.trading_system.exception;
+package com.example.tradingSystem.exception;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.http.HttpStatus;
