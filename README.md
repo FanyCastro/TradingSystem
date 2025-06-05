@@ -1,7 +1,9 @@
 # Trading System
 
-![License](https://img.shields.io/github/license/FanyCastro/productsAPI?color=blue)
+![Java CI](https://img.shields.io/github/actions/workflow/status/FanyCastro/trading-system/maven.yml?logo=github&label=Build)
+![Coverage](https://img.shields.io/codecov/c/github/FanyCastro/trading-system/main?logo=codecov&label=Coverage)
 [![Java](https://img.shields.io/badge/Java-21-blue?logo=java)](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html)
+![License](https://img.shields.io/github/license/FanyCastro/productsAPI?color=blue)
 
 ## Description
 A simplified trading system for a financial exchange, implemented in Java 21 and Spring Boot. The system supports buy and sell orders for financial instruments, with a matching engine and REST API.
