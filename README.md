@@ -1,7 +1,7 @@
 # Trading System
 
 ![Java CI](https://img.shields.io/github/actions/workflow/status/FanyCastro/TradingSystem/maven.yml?logo=github&label=Build)
-![Coverage](https://img.shields.io/codecov/c/github/FanyCastro/tradingSystem/main?logo=codecov&label=Coverage)
+![Coverage](https://img.shields.io/codecov/c/github/FanyCastro/TradingSystem/main?logo=codecov&label=Coverage)
 [![Java](https://img.shields.io/badge/Java-21-blue?logo=java)](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html)
 ![License](https://img.shields.io/github/license/FanyCastro/productsAPI?color=blue)
 
