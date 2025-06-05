@@ -92,6 +92,13 @@ A simplified trading system for a financial exchange, implemented in Java 21 and
 - Add more advanced order types (market, stop, etc.)
 - Add more endpoints for trade history, statistics, etc.
 
+## API Documentation (Swagger/OpenAPI)
+- Automatic interactive API documentation is available thanks to [springdoc-openapi](https://springdoc.org/).
+- After running the application, access the Swagger UI at:
+  - http://localhost:8080/swagger-ui.html
+  - or http://localhost:8080/swagger-ui/index.html
+- You can explore and test all endpoints directly from the browser.
+
 ---
 
 **Author:** Estefanía Castro

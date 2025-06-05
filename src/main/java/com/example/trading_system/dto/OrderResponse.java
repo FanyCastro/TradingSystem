@@ -1,15 +1,16 @@
 package com.example.trading_system.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import com.example.trading_system.model.Order;
 
 /**
  * DTO for returning order status and information to the client.
  */
 public record OrderResponse(
-    /** Unique order identifier */
+    @Schema(description = "Unique order identifier", example = "123e4567-e89b-12d3-a456-426614174001")
     String orderId,
-    /** Status of the order */
+    @Schema(description = "Status of the order", example = "OPEN")
     Order.OrderStatus status,
-    /** Informational message */
+    @Schema(description = "Informational message", example = "Order placed. No trades executed yet.")
     String message
 ) {}

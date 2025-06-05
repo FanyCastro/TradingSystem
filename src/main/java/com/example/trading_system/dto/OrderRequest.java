@@ -1,5 +1,6 @@
 package com.example.trading_system.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import com.example.trading_system.model.Order;
 
@@ -7,14 +8,14 @@ import com.example.trading_system.model.Order;
  * DTO for placing a new order. Used as the request body in the REST API.
  */
 public record OrderRequest(
-    /** Trader placing the order */
+    @Schema(description = "Trader placing the order", example = "trader1")
     String traderId,
-    /** Instrument to trade */
+    @Schema(description = "Instrument to trade", example = "123e4567-e89b-12d3-a456-426614174000")
     String instrumentId,
-    /** Order type: BUY or SELL */
+    @Schema(description = "Order type: BUY or SELL", example = "BUY")
     Order.OrderType type,
-    /** Limit price (nullable for market orders) */
+    @Schema(description = "Limit price (nullable for market orders)", example = "100.00")
     BigDecimal price,
-    /** Quantity to buy or sell */
+    @Schema(description = "Quantity to buy or sell", example = "10")
     int quantity
 ) {}

@@ -1,5 +1,6 @@
 package com.example.trading_system.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.util.UUID;
 
@@ -7,19 +8,13 @@ import java.util.UUID;
  * Represents a financial instrument (e.g., stock, crypto) that can be traded in the system.
  */
 public class Instrument {
-    /**
-     * Unique identifier for the instrument.
-     */
+    @Schema(description = "Unique identifier for the instrument", example = "123e4567-e89b-12d3-a456-426614174000")
     private String id;
 
-    /**
-     * Symbol of the instrument (e.g., "AAPL", "BTC").
-     */
+    @Schema(description = "Symbol of the instrument", example = "BTC")
     private String symbol;
 
-    /**
-     * Current market price, calculated as the mid price between best buy and sell orders.
-     */
+    @Schema(description = "Current market price, calculated as the mid price between best buy and sell orders", example = "105.50")
     private BigDecimal marketPrice;
 
     public Instrument(String symbol) {
