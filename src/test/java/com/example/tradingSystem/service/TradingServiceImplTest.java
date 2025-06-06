@@ -1,9 +1,9 @@
 package com.example.tradingSystem.service;
 
+import com.example.tradingSystem.exception.TradingException;
 import com.example.tradingSystem.model.Instrument;
 import com.example.tradingSystem.model.Order;
 import com.example.tradingSystem.model.Trade;
-import com.example.tradingSystem.exception.TradingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -11,12 +11,13 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Unit tests for TradingService logic.
  */
-class tradingServiceTest {
+class TradingServiceTest {
     private TradingService tradingService;
 
     @BeforeEach
@@ -35,8 +36,8 @@ class tradingServiceTest {
     void testPlaceOrderAndMatch() {
         Instrument instrument = new Instrument("AAPL");
         tradingService.registerInstrument(instrument);
-        Order buyOrder = new Order(instrument.getId(), Order.OrderType.BUY, new BigDecimal("110"), 10);
-        Order sellOrder = new Order(instrument.getId(), Order.OrderType.SELL, new BigDecimal("100"), 10);
+        Order buyOrder = new Order(instrument.getId(), "trader1", Order.OrderType.BUY, new BigDecimal("110"), 10);
+        Order sellOrder = new Order(instrument.getId(), "trader2", Order.OrderType.SELL, new BigDecimal("100"), 10);
         
         tradingService.placeOrder(buyOrder);
         
@@ -50,7 +51,7 @@ class tradingServiceTest {
     void testCancelOrder() {
         Instrument instrument = new Instrument("AAPL");
         tradingService.registerInstrument(instrument);
-        Order buyOrder = new Order(instrument.getId(), Order.OrderType.BUY, new BigDecimal("110"), 10);
+        Order buyOrder = new Order(instrument.getId(), "trader1", Order.OrderType.BUY, new BigDecimal("110"), 10);
 
         tradingService.placeOrder(buyOrder);
 
@@ -65,8 +66,8 @@ class tradingServiceTest {
         Instrument instrument = new Instrument("AAPL");
         tradingService.registerInstrument(instrument);
         var orderBook = tradingService.getOrderBook(instrument.getId());
-        Order buyOrder = new Order(instrument.getId(), Order.OrderType.BUY, new BigDecimal("110"), 10);
-        Order sellOrder = new Order(instrument.getId(), Order.OrderType.SELL, new BigDecimal("100"), 10);
+        Order buyOrder = new Order(instrument.getId(), "trader1", Order.OrderType.BUY, new BigDecimal("110"), 10);
+        Order sellOrder = new Order(instrument.getId(), "trader2", Order.OrderType.SELL, new BigDecimal("100"), 10);
         orderBook.addOrder(buyOrder);
         orderBook.addOrder(sellOrder);
         // Update market price after adding orders

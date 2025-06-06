@@ -42,10 +42,17 @@ public interface TradingService {
      * @param instrumentId The instrument ID.
      * @return The OrderBook, or null if not found.
      */
-    OrderBook getOrderBook(String instrumentId);
+    OrderBookImpl getOrderBook(String instrumentId);
 
     /**
      * Gets all registered instruments.
      */
     Collection<Instrument> getAllInstruments();
+
+    /**
+     * Gets all orders placed by a trader.
+     * @param traderId The trader ID.
+     * @return List of orders placed by the trader.
+     */
+    List<Order> getOrdersByTrader(String traderId);
 }

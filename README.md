@@ -1,159 +1,509 @@
 # Trading System
 
-![Java CI](https://img.shields.io/github/actions/workflow/status/FanyCastro/TradingSystem/maven.yml?logo=github&label=Build)
-![Coverage](https://img.shields.io/codecov/c/github/FanyCastro/TradingSystem/main?logo=codecov&label=Coverage&token=YOUR_CODECOV_TOKEN)
-[![Java](https://img.shields.io/badge/Java-21-blue?logo=java)](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html)
-![License](https://img.shields.io/github/license/FanyCastro/productsAPI?color=blue)
+## Business Description
 
-## Description
-A simplified trading system for a financial exchange, implemented in Java 21 and Spring Boot. The system supports buy and sell orders for financial instruments, with a matching engine and REST API.
+This system implements a trading engine that allows users to buy and sell financial instruments. The system is designed to be fast, reliable, and scalable, following financial market best practices.
 
-## Features
-- Register financial instruments (symbol, unique ID, market price)
-- Place and cancel buy/sell orders
-- Order matching engine (price-time priority)
-- Market price based on mid price between best buy and best sell orders
-- REST API for all core operations
-- Unit and integration tests included
-- Swagger/OpenAPI documentation
-- RESTful API design following best practices
+### What does this system do?
 
-## Architecture
-- **Spring Boot** (Java 21)
-- **Domain model:** `Instrument`, `Order`, `Trade` (record)
-- **Service layer:** `OrderBook`, `TradingService`
-- **REST API:** `TradingController`
-- **Configuration:** `config/TradingSystemConfig.java`
-- **DTOs:** For request/response objects
-- **Tests:** JUnit 5 (unit and integration)
+1. **Instrument Management**
+   - Allows registration of new financial instruments (stocks, bonds, etc.)
+   - Each instrument has a unique identifier and market price
+   - Prices are automatically updated based on trading activity
 
-## How to Run
-1. **Build and test:**
-   ```bash
-   ./mvnw clean verify
+2. **Order Trading**
+   - Users can place buy and sell orders
+   - Orders are automatically executed when there's a match
+   - Price-time priority system to ensure a fair market
+
+3. **Market Transparency**
+   - Users can view the order book in real-time
+   - Access to updated market prices
+   - History of executed trades
+
+### Why is it important?
+
+- **Market Efficiency**: The system ensures orders are executed at the best available price
+- **Transparency**: All participants have access to the same information
+- **Reliability**: Designed to handle large volumes of orders
+- **Scalability**: Easy to extend to support new types of instruments and orders
+
+## Technical Architecture
+
+### Why Spring Boot?
+
+Spring Boot was chosen for several reasons:
+- **Productivity**: Rapid development with auto-configuration
+- **Ecosystem**: Large number of libraries and tools
+- **Maintainability**: Clean and well-structured code
+- **Testing**: Excellent support for unit and integration testing
+
+### Core Components
+
+1. **TradingService**
+   - Central service that orchestrates all trading operations
+   - Maintains a map of instruments and their order books
+   - Handles order placement, cancellation, and matching
+
+2. **OrderBook**
+   - Manages buy and sell orders for a specific instrument
+   - Maintains separate sorted lists for buy and sell orders
+   - Implements price-time priority matching algorithm
+
+3. **Order**
+   - Represents a trading order with:
+     - Unique order ID
+     - Instrument ID
+     - Type (BUY/SELL)
+     - Price
+     - Quantity
+     - Status (OPEN/FILLED/CANCELLED)
+     - Timestamp
+
+4. **Trade**
+   - Created when orders are matched
+   - Contains:
+     - Unique trade ID
+     - Buy order ID
+     - Sell order ID
+     - Price
+     - Quantity
+     - Timestamp
+
+### How does order matching work?
+
+The system implements a price-time based matching algorithm:
+
+1. **Price Priority**
+   - Buy orders: highest price first
+   - Sell orders: lowest price first
+   - This ensures traders get the best possible price
+
+2. **Time Priority**
+   - For orders at the same price, first in, first out
+   - Implemented using precise timestamps
+   - Ensures a fair and transparent market
+
+3. **Matching Process**
+   ```java
+   // Pseudocode of the process
+   when new order arrives:
+     if order is BUY:
+       look for best SELL order (lowest price)
+       if price matches:
+         execute trade
+         update remaining quantities
+     if order is SELL:
+       look for best BUY order (highest price)
+       if price matches:
+         execute trade
+         update remaining quantities
    ```
-2. **Run the application:**
-   ```bash
-   ./mvnw spring-boot:run
+
+### Order Lifecycle
+
+1. **Order Creation**
+   - Generate unique order ID
+   - Set initial status as OPEN
+   - Add to appropriate order book
+
+2. **Order Matching**
+   - Check for potential matches
+   - Create trades for matched quantities
+   - Update order status if fully filled
+
+3. **Order Cancellation**
+   - Remove from order book
+   - Update status to CANCELLED
+   - No trades are created
+
+### How is data handled in memory?
+
+The system uses optimized data structures:
+
+1. **OrderBook**
+   - `TreeMap` for buy and sell orders
+   - Sorted by price and timestamp
+   - Efficient O(log n) search
+   - Example:
+   ```java
+   private final TreeMap<BigDecimal, List<Order>> buyOrders;
+   private final TreeMap<BigDecimal, List<Order>> sellOrders;
    ```
-   The API will be available at `http://localhost:8080/api/trading`
+
+2. **Instruments**
+   - `HashMap` for quick OrderBook access
+   - Key: instrumentId
+   - Value: corresponding OrderBook
+   - Example:
+   ```java
+   private final Map<String, OrderBook> orderBooks;
+   ```
+
+3. **Trades**
+   - List of executed trades
+   - Maintained for audit and history
+
+### Market Price Calculation
+
+- Market price = (best buy price + best sell price) / 2
+- If only one side exists, use that price
+- If neither side exists, price is zero
+
+### How are errors and validations handled?
+
+1. **Input Validation**
+   - Validation annotations in DTOs
+   - Business validations in service layer
+   - Descriptive error messages
+
+2. **Error Handling**
+   - Custom exceptions by error type
+   - Appropriate HTTP responses
+   - Detailed logging for debugging
+
+The system uses a consistent error response format:
+```json
+{
+  "errorCode": "ERROR_CODE",
+  "message": "Detailed error message"
+}
+```
+
+Common error codes:
+- `VALIDATION_ERROR`: Input validation failed
+- `INVALID_SYMBOL`: Invalid instrument symbol
+- `INVALID_ORDER`: Invalid order parameters
+- `INSTRUMENT_NOT_FOUND`: Instrument does not exist
+- `SYSTEM_ERROR`: Unexpected system error
+
+### How is the system tested?
+
+1. **Unit Tests**
+   - Matching logic
+   - Business validations
+   - Error handling
+
+2. **Integration Tests**
+   - Complete trading flows
+   - Endpoint validation
+   - Error scenarios
+
+3. **Test Coverage**
+   - Minimum 80% coverage
+   - Focus on critical business logic
+   - Automated tests in CI/CD
 
 ## API Endpoints
 
-### Instruments
-- **Register instrument:**
-  ```http
-  POST /api/trading/instrument
-  Content-Type: application/json
+### Register Instrument
+- **POST** `/api/trading/instrument`
+- **Request Body**: 
+  ```json
   {
-    "symbol": "TSLA"
+    "symbol": "BTC"
   }
   ```
-  Response: 201 Created with Location header and instrument details
-
-- **Get all instruments:**
-  ```http
-  GET /api/trading/instruments
-  ```
-  Response: 200 OK with list of instruments including their current market prices
-
-### Orders
-- **Place order:**
-  ```http
-  POST /api/trading/order
-  Content-Type: application/json
+- **Response**: 201 Created
+  ```json
   {
-    "traderId": "trader1",
-    "instrumentId": "<instrumentId>",
+    "id": "BTC",
+    "symbol": "BTC",
+    "marketPrice": 0.00
+  }
+  ```
+- **Validation**: 
+  - Symbol must be uppercase letters and numbers only
+  - Symbol is required
+  - Symbol must be unique
+
+### Place Order
+- **POST** `/api/trading/instrument/{instrumentId}/order`
+- **Request Body**: 
+  ```json
+  {
     "type": "BUY",
-    "price": 100,
+    "price": 100.00,
     "quantity": 10
   }
   ```
-  Response: 201 Created with Location header and order details
-
-- **Cancel order:**
-  ```http
-  DELETE /api/trading/order/{instrumentId}/{orderId}
+- **Response**: 201 Created
+  ```json
+  {
+    "orderId": "order-123",
+    "status": "OPEN",
+    "trades": [
+      {
+        "tradeId": "trade-456",
+        "price": 100.00,
+        "quantity": 5
+      }
+    ]
+  }
   ```
-  Response: 200 OK with cancellation status
+- **Validation**:
+  - Price must be greater than 0
+  - Quantity must be positive
+  - Instrument must exist
+  - Order type must be valid
 
-### Market Data
-- **Get market price:**
-  ```http
-  GET /api/trading/market-price/{instrumentId}
+### Cancel Order
+- **DELETE** `/api/trading/instrument/{instrumentId}/order/{orderId}`
+- **Response**: 200 OK
+  ```json
+  {
+    "success": true,
+    "message": "Order cancelled successfully"
+  }
   ```
-  Response: 200 OK with current market price
 
-- **Get order book:**
-  ```http
-  GET /api/trading/order-book/{instrumentId}
+### Get Market Price
+- **GET** `/api/trading/instrument/{instrumentId}/price`
+- **Response**: 200 OK
+  ```json
+  {
+    "instrumentId": "BTC",
+    "price": 100.00,
+    "timestamp": "2024-03-20T10:30:00Z"
+  }
   ```
-  Response: 200 OK with current buy and sell orders
 
-## REST API Design
-The API follows REST best practices:
-- **Resource Creation:**
-  - POST requests return 201 Created
-  - Location header points to the new resource
-  - Response body contains the created resource
-- **Resource Retrieval:**
-  - GET requests return 200 OK
-  - Response body contains the requested resource(s)
-- **Resource Deletion:**
-  - DELETE requests return 200 OK
-  - Response body contains operation status
-- **Error Handling:**
-  - 400 Bad Request for invalid input
-  - 404 Not Found for missing resources
-  - 500 Internal Server Error for system issues
-  - Error responses include error code and message
+### Get Order Book
+- **GET** `/api/trading/instrument/{instrumentId}/orderbook`
+- **Response**: 200 OK
+  ```json
+  {
+    "instrumentId": "BTC",
+    "buyOrders": [
+      {
+        "orderId": "order-123",
+        "price": 100.00,
+        "quantity": 10,
+        "timestamp": "2024-03-20T10:30:00Z"
+      }
+    ],
+    "sellOrders": [
+      {
+        "orderId": "order-124",
+        "price": 101.00,
+        "quantity": 5,
+        "timestamp": "2024-03-20T10:30:01Z"
+      }
+    ]
+  }
+  ```
+
+## Getting Started
+
+### Prerequisites
+- Java 21 or higher
+- Maven 3.8 or higher
+- Git
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/trading-system.git
+   cd trading-system
+   ```
+
+2. Build the project:
+   ```bash
+   mvn clean install
+   ```
+
+3. Run the application:
+   ```bash
+   mvn spring-boot:run
+   ```
+
+The application will start on `http://localhost:8080`
 
 ## Testing & Coverage
-- **Unit tests:** Cover order matching, order book logic, and service layer
-- **Integration tests:** Cover REST API endpoints and end-to-end flows
-- **Unified coverage:** Both unit and integration tests are executed together with `mvn test` or `mvn verify`
-- **How to run all tests and generate coverage report:**
-  ```bash
-  ./mvnw clean verify
-  # or
-  ./mvnw test
+
+### Running Tests
+
+1. **Unit Tests**
+   ```bash
+   mvn test
+   ```
+
+2. **Integration Tests**
+   ```bash
+   mvn verify
+   ```
+
+3. **Test Coverage Report**
+   ```bash
+   mvn test jacoco:report
+   ```
+   The coverage report will be available at `target/site/jacoco/index.html`
+
+### Test Structure
+
+1. **Unit Tests**
+   - `TradingServiceImplTest`: Core trading logic
+   - `OrderBookTest`: Order matching and management
+   - `OrderTest`: Order lifecycle and validation
+   - `TradeTest`: Trade creation and properties
+
+2. **Integration Tests**
+   - `TradingControllerIT`: API endpoint testing
+   - `TradingServiceIT`: End-to-end trading flows
+   - `ErrorHandlingIT`: Error scenarios and responses
+
+### Coverage Requirements
+
+- Minimum 80% line coverage
+- 100% coverage for critical business logic:
+  - Order matching algorithm
+  - Price calculation
+  - Error handling
+  - Input validation
+
+## API Documentation
+
+### Swagger UI
+
+The API documentation is available through Swagger UI:
+- URL: `http://localhost:8080/swagger-ui.html`
+- Interactive documentation
+- Try-it-out functionality
+- Request/response examples
+
+### OpenAPI Specification
+
+The OpenAPI specification is available at:
+- URL: `http://localhost:8080/v3/api-docs`
+- Format: JSON
+- Version: 3.0
+
+### API Endpoints
+
+#### Register Instrument
+- **POST** `/api/trading/instrument`
+- **Request Body**: 
+  ```json
+  {
+    "symbol": "BTC"
+  }
   ```
-- **View coverage report:**
-  Open `target/site/jacoco/index.html` in your browser
+- **Response**: 201 Created
+  ```json
+  {
+    "id": "BTC",
+    "symbol": "BTC",
+    "marketPrice": 0.00
+  }
+  ```
+- **Validation**: 
+  - Symbol must be uppercase letters and numbers only
+  - Symbol is required
+  - Symbol must be unique
 
-## Technical Notes
-- Uses Java 21 records for immutable data (e.g., `Trade`, DTOs)
-- Market price is always the mid price between best buy and sell orders (if both exist)
-- Clean separation of concerns: model, service, controller, config, dto
-- No external database: all data is in-memory for simplicity
-- No UI: focus on core backend logic and API
-- RESTful API design following best practices:
-  - POST for creation (201 Created with Location header)
-  - GET for retrieval
-  - DELETE for cancellation
-  - Proper error handling with meaningful status codes
-  - Consistent response formats
+#### Place Order
+- **POST** `/api/trading/instrument/{instrumentId}/order`
+- **Request Body**: 
+  ```json
+  {
+    "type": "BUY",
+    "price": 100.00,
+    "quantity": 10
+  }
+  ```
+- **Response**: 201 Created
+  ```json
+  {
+    "orderId": "order-123",
+    "status": "OPEN",
+    "trades": [
+      {
+        "tradeId": "trade-456",
+        "price": 100.00,
+        "quantity": 5
+      }
+    ]
+  }
+  ```
+- **Validation**:
+  - Price must be greater than 0
+  - Quantity must be positive
+  - Instrument must exist
+  - Order type must be valid
 
-## How to Extend
-- Add persistence (JPA, MongoDB, etc.)
-- Add authentication/authorization
-- Add more advanced order types (market, stop, etc.)
-- Add more endpoints for trade history, statistics, etc.
-- Add WebSocket support for real-time updates
-- Add rate limiting and circuit breakers
+#### Cancel Order
+- **DELETE** `/api/trading/instrument/{instrumentId}/order/{orderId}`
+- **Response**: 200 OK
+  ```json
+  {
+    "success": true,
+    "message": "Order cancelled successfully"
+  }
+  ```
 
-## API Documentation (Swagger/OpenAPI)
-- Automatic interactive API documentation is available thanks to [springdoc-openapi](https://springdoc.org/)
-- After running the application, access the Swagger UI at:
-  - http://localhost:8080/swagger-ui.html
-  - or http://localhost:8080/swagger-ui/index.html
-- You can explore and test all endpoints directly from the browser
-- Each endpoint includes:
-  - Request/response examples
-  - Error scenarios
-  - Schema definitions
-  - Authentication requirements (if any)
+#### Get Market Price
+- **GET** `/api/trading/instrument/{instrumentId}/price`
+- **Response**: 200 OK
+  ```json
+  {
+    "instrumentId": "BTC",
+    "price": 100.00,
+    "timestamp": "2024-03-20T10:30:00Z"
+  }
+  ```
+
+#### Get Order Book
+- **GET** `/api/trading/instrument/{instrumentId}/orderbook`
+- **Response**: 200 OK
+  ```json
+  {
+    "instrumentId": "BTC",
+    "buyOrders": [
+      {
+        "orderId": "order-123",
+        "price": 100.00,
+        "quantity": 10,
+        "timestamp": "2024-03-20T10:30:00Z"
+      }
+    ],
+    "sellOrders": [
+      {
+        "orderId": "order-124",
+        "price": 101.00,
+        "quantity": 5,
+        "timestamp": "2024-03-20T10:30:01Z"
+      }
+    ]
+  }
+  ```
+
+### Error Responses
+
+All error responses follow this format:
+```json
+{
+  "errorCode": "ERROR_CODE",
+  "message": "Detailed error message"
+}
+```
+
+Common error codes:
+- `VALIDATION_ERROR`: Input validation failed
+- `INVALID_SYMBOL`: Invalid instrument symbol
+- `INVALID_ORDER`: Invalid order parameters
+- `INSTRUMENT_NOT_FOUND`: Instrument does not exist
+- `SYSTEM_ERROR`: Unexpected system error
+
+## Next Steps
+
+- Data persistence
+- User authentication
+- Real-time updates
+- Advanced order types
+- Transaction history
+- Risk management
+- Performance monitoring
 
 ---
 

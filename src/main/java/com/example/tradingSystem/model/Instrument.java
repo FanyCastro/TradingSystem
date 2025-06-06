@@ -1,6 +1,7 @@
 package com.example.tradingSystem.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.math.BigDecimal;
 import java.util.UUID;
 
@@ -9,10 +10,10 @@ import java.util.UUID;
  */
 public class Instrument {
     @Schema(description = "Unique identifier for the instrument", example = "123e4567-e89b-12d3-a456-426614174000")
-    private String id;
+    private final String id;
 
     @Schema(description = "Symbol of the instrument", example = "BTC")
-    private String symbol;
+    private final String symbol;
 
     @Schema(description = "Current market price, calculated as the mid price between best buy and sell orders", example = "105.50")
     private BigDecimal marketPrice;

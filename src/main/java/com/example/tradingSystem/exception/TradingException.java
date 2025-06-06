@@ -50,9 +50,6 @@ public class TradingException extends RuntimeException {
         @Schema(description = "Insufficient funds or quantity for the order")
         INSUFFICIENT_RESOURCES,
         
-        @Schema(description = "Invalid symbol format")
-        INVALID_SYMBOL,
-        
         @Schema(description = "System is currently unavailable")
         SYSTEM_ERROR
     }
