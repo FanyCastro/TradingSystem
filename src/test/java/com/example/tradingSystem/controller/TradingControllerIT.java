@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.*;
@@ -16,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class TradingControllerIT {
     @Autowired
     private MockMvc mockMvc;
@@ -30,15 +32,18 @@ class TradingControllerIT {
     void testRegisterInstrument_success() throws Exception {
         String symbol = "TSLA";
         mockMvc.perform(post("/api/trading/instrument")
-                .param("symbol", symbol))
-                .andExpect(status().isOk())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"symbol\": \"" + symbol + "\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"))
                 .andExpect(jsonPath("$.symbol", is(symbol)));
     }
 
     @Test
     void testRegisterInstrument_invalidSymbol_returnsTradingException() throws Exception {
         mockMvc.perform(post("/api/trading/instrument")
-                .param("symbol", ""))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"symbol\": \"\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode", is("INVALID_SYMBOL")))
                 .andExpect(jsonPath("$.message", containsString("Symbol cannot be empty")));
@@ -48,13 +53,14 @@ class TradingControllerIT {
     void testPlaceOrder_success() throws Exception {
         // Register instrument
         String instrumentResponse = mockMvc.perform(post("/api/trading/instrument")
-                .param("symbol", "AAPL"))
-                .andExpect(status().isOk())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"symbol\": \"AAPL\"}"))
+                .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         String instrumentId = extractField(instrumentResponse, "id");
+
         // Place order
         String orderJson = "{" +
-                "\"traderId\":\"trader1\"," +
                 "\"instrumentId\":\"" + instrumentId + "\"," +
                 "\"type\":\"BUY\"," +
                 "\"price\":100," +
@@ -62,7 +68,8 @@ class TradingControllerIT {
         mockMvc.perform(post("/api/trading/order")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(orderJson))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"))
                 .andExpect(jsonPath("$.status", is("OPEN")));
     }
 
@@ -70,13 +77,14 @@ class TradingControllerIT {
     void testPlaceOrder_invalidPrice_returnsTradingException() throws Exception {
         // Register instrument
         String instrumentResponse = mockMvc.perform(post("/api/trading/instrument")
-                .param("symbol", "ERR"))
-                .andExpect(status().isOk())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"symbol\": \"ERR\"}"))
+                .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         String instrumentId = extractField(instrumentResponse, "id");
+
         // Place order with negative price
         String orderJson = "{" +
-                "\"traderId\":\"trader1\"," +
                 "\"instrumentId\":\"" + instrumentId + "\"," +
                 "\"type\":\"BUY\"," +
                 "\"price\":-10," +
@@ -94,14 +102,14 @@ class TradingControllerIT {
         // Register a new instrument
         String symbol = "AMZN";
         String instrumentResponse = mockMvc.perform(post("/api/trading/instrument")
-                        .param("symbol", symbol))
-                .andExpect(status().isOk())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"symbol\": \"" + symbol + "\"}"))
+                .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         String instrumentId = extractField(instrumentResponse, "id");
 
         // Place a buy order
         String buyOrderJson = "{" +
-                "\"traderId\":\"trader1\"," +
                 "\"instrumentId\":\"" + instrumentId + "\"," +
                 "\"type\":\"BUY\"," +
                 "\"price\":90," +
@@ -109,7 +117,7 @@ class TradingControllerIT {
         String buyOrderResponse = mockMvc.perform(post("/api/trading/order")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(buyOrderJson))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         String buyOrderId = extractField(buyOrderResponse, "orderId");
 
@@ -144,15 +152,15 @@ class TradingControllerIT {
         // Register a new instrument
         String symbol = "TSLA";
         String instrumentResponse = mockMvc.perform(post("/api/trading/instrument")
-                .param("symbol", symbol))
-                .andExpect(status().isOk())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"symbol\": \"" + symbol + "\"}"))
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.symbol", is(symbol)))
                 .andReturn().getResponse().getContentAsString();
         String instrumentId = extractField(instrumentResponse, "id");
 
         // Place a buy order
         String buyOrderJson = "{" +
-                "\"traderId\":\"trader1\"," +
                 "\"instrumentId\":\"" + instrumentId + "\"," +
                 "\"type\":\"BUY\"," +
                 "\"price\":110," +
@@ -160,12 +168,11 @@ class TradingControllerIT {
         mockMvc.perform(post("/api/trading/order")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(buyOrderJson))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status", is("OPEN")));
 
         // Place a sell order
         String sellOrderJson = "{" +
-                "\"traderId\":\"trader2\"," +
                 "\"instrumentId\":\"" + instrumentId + "\"," +
                 "\"type\":\"SELL\"," +
                 "\"price\":100," +
@@ -173,12 +180,37 @@ class TradingControllerIT {
         mockMvc.perform(post("/api/trading/order")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(sellOrderJson))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status", anyOf(is("FILLED"), is("PARTIALLY_FILLED"), is("OPEN"))));
 
         // Query market price (should be 0 after matching)
         mockMvc.perform(get("/api/trading/market-price/" + instrumentId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.price", is(0)));
+    }
+
+    @Test
+    void testGetAllInstruments_success() throws Exception {
+        // Register multiple instruments
+        String[] symbols = {"AAPL", "GOOGL", "MSFT"};
+        for (String symbol : symbols) {
+            mockMvc.perform(post("/api/trading/instrument")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"symbol\": \"" + symbol + "\"}"))
+                    .andExpect(status().isCreated());
+        }
+
+        // Get all instruments
+        mockMvc.perform(get("/api/trading/instruments"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(3)))
+                .andExpect(jsonPath("$[*].symbol", containsInAnyOrder(symbols)));
+    }
+
+    @Test
+    void testGetAllInstruments_empty() throws Exception {
+        mockMvc.perform(get("/api/trading/instruments"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 } 

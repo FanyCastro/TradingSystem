@@ -3,8 +3,10 @@ package com.example.tradingSystem.service;
 import com.example.tradingSystem.model.Instrument;
 import com.example.tradingSystem.model.Order;
 import com.example.tradingSystem.model.Trade;
+import com.example.tradingSystem.exception.TradingException;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 /**
@@ -30,7 +32,8 @@ public class TradingServiceImpl implements TradingService {
     public List<Trade> placeOrder(Order order) {
         OrderBook orderBook = orderBooks.get(order.getInstrumentId());
         if (orderBook == null) {
-            throw new IllegalArgumentException("Instrument not found: " + order.getInstrumentId());
+            throw new TradingException(TradingException.ErrorCode.INSTRUMENT_NOT_FOUND.name(),
+                "Instrument not found: " + order.getInstrumentId());
         }
         orderBook.addOrder(order);
         updateMarketPrice(order.getInstrumentId());
@@ -72,7 +75,7 @@ public class TradingServiceImpl implements TradingService {
         Order bestSell = orderBook.getBestSellOrder();
         BigDecimal marketPrice;
         if (bestBuy != null && bestSell != null) {
-            marketPrice = bestBuy.getPrice().add(bestSell.getPrice()).divide(BigDecimal.valueOf(2), BigDecimal.ROUND_HALF_UP);
+            marketPrice = bestBuy.getPrice().add(bestSell.getPrice()).divide(BigDecimal.valueOf(2), RoundingMode.HALF_UP);
         } else if (bestBuy != null) {
             marketPrice = bestBuy.getPrice();
         } else if (bestSell != null) {

@@ -12,9 +12,6 @@ public class Order {
     @Schema(description = "Unique identifier for the order", example = "123e4567-e89b-12d3-a456-426614174001")
     private String orderId;
 
-    @Schema(description = "Identifier of the trader who placed the order", example = "trader1")
-    private String traderId;
-
     @Schema(description = "Identifier of the instrument this order is for", example = "123e4567-e89b-12d3-a456-426614174000")
     private String instrumentId;
 
@@ -33,9 +30,8 @@ public class Order {
     @Schema(description = "Timestamp when the order was created (used for FIFO priority)", example = "2024-06-05T21:00:00")
     private LocalDateTime timestamp;
 
-    public Order(String traderId, String instrumentId, OrderType type, BigDecimal price, int quantity) {
+    public Order(String instrumentId, OrderType type, BigDecimal price, int quantity) {
         this.orderId = UUID.randomUUID().toString();
-        this.traderId = traderId;
         this.instrumentId = instrumentId;
         this.type = type;
         this.price = price;
@@ -46,10 +42,6 @@ public class Order {
 
     public String getOrderId() {
         return orderId;
-    }
-
-    public String getTraderId() {
-        return traderId;
     }
 
     public String getInstrumentId() {

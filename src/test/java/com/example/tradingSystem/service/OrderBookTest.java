@@ -24,7 +24,7 @@ class OrderBookTest {
 
     @Test
     void testAddOrder() {
-        Order buyOrder = new Order("trader1", INSTRUMENT_ID, Order.OrderType.BUY, new BigDecimal("100"), 10);
+        Order buyOrder = new Order( INSTRUMENT_ID, Order.OrderType.BUY, new BigDecimal("100"), 10);
         orderBook.addOrder(buyOrder);
         assertEquals(1, orderBook.getBuyOrders().size());
         assertTrue(orderBook.getBuyOrders().contains(buyOrder));
@@ -32,7 +32,7 @@ class OrderBookTest {
 
     @Test
     void testCancelOrder() {
-        Order sellOrder = new Order("trader2", INSTRUMENT_ID, Order.OrderType.SELL, new BigDecimal("105"), 5);
+        Order sellOrder = new Order(INSTRUMENT_ID, Order.OrderType.SELL, new BigDecimal("105"), 5);
         orderBook.addOrder(sellOrder);
         boolean cancelled = orderBook.cancelOrder(sellOrder.getOrderId());
         assertTrue(cancelled);
@@ -41,8 +41,8 @@ class OrderBookTest {
 
     @Test
     void testMatchOrders_FullFill() {
-        Order buyOrder = new Order("trader1", INSTRUMENT_ID, Order.OrderType.BUY, new BigDecimal("110"), 10);
-        Order sellOrder = new Order("trader2", INSTRUMENT_ID, Order.OrderType.SELL, new BigDecimal("100"), 10);
+        Order buyOrder = new Order(INSTRUMENT_ID, Order.OrderType.BUY, new BigDecimal("110"), 10);
+        Order sellOrder = new Order(INSTRUMENT_ID, Order.OrderType.SELL, new BigDecimal("100"), 10);
         orderBook.addOrder(buyOrder);
         orderBook.addOrder(sellOrder);
         List<Trade> trades = orderBook.matchOrders();
@@ -55,8 +55,8 @@ class OrderBookTest {
 
     @Test
     void testMatchOrders_PartialFill() {
-        Order buyOrder = new Order("trader1", INSTRUMENT_ID, Order.OrderType.BUY, new BigDecimal("110"), 5);
-        Order sellOrder = new Order("trader2", INSTRUMENT_ID, Order.OrderType.SELL, new BigDecimal("100"), 10);
+        Order buyOrder = new Order(INSTRUMENT_ID, Order.OrderType.BUY, new BigDecimal("110"), 5);
+        Order sellOrder = new Order(INSTRUMENT_ID, Order.OrderType.SELL, new BigDecimal("100"), 10);
         orderBook.addOrder(buyOrder);
         orderBook.addOrder(sellOrder);
         List<Trade> trades = orderBook.matchOrders();
@@ -69,8 +69,8 @@ class OrderBookTest {
 
     @Test
     void testNoMatchWhenPricesDoNotCross() {
-        Order buyOrder = new Order("trader1", INSTRUMENT_ID, Order.OrderType.BUY, new BigDecimal("90"), 10);
-        Order sellOrder = new Order("trader2", INSTRUMENT_ID, Order.OrderType.SELL, new BigDecimal("100"), 10);
+        Order buyOrder = new Order(INSTRUMENT_ID, Order.OrderType.BUY, new BigDecimal("90"), 10);
+        Order sellOrder = new Order(INSTRUMENT_ID, Order.OrderType.SELL, new BigDecimal("100"), 10);
         orderBook.addOrder(buyOrder);
         orderBook.addOrder(sellOrder);
         List<Trade> trades = orderBook.matchOrders();

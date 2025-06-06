@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 
@@ -44,19 +45,21 @@ public class TradingController {
             examples = @ExampleObject(value = "{\"errorCode\": \"SYSTEM_ERROR\", \"message\": \"An unexpected error occurred\"}")))
     })
     @PostMapping("/instrument")
-    public ResponseEntity<Instrument> registerInstrument(@RequestParam String symbol) {
-        if (symbol == null || symbol.trim().isEmpty()) {
-            throw new TradingException(TradingException.ErrorCode.INVALID_SYMBOL.name(), 
-                "Symbol cannot be empty or contain special characters");
+    public ResponseEntity<Instrument> registerInstrument(@RequestBody InstrumentRequest request) {
+        if (request.symbol() == null || request.symbol().trim().isEmpty()) {
+            throw new TradingException(TradingException.ErrorCode.INVALID_SYMBOL.name(),
+                    "Symbol cannot be empty or contain special characters");
         }
-        Instrument instrument = new Instrument(symbol);
+        Instrument instrument = new Instrument(request.symbol());
         tradingService.registerInstrument(instrument);
-        return ResponseEntity.ok(instrument);
+        return ResponseEntity
+                .created(URI.create("/api/trading/instruments/" + instrument.getId()))
+                .body(instrument);
     }
 
     @Operation(summary = "Place a new order", description = "Places a new buy or sell order for a given instrument.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Order placed successfully", 
+        @ApiResponse(responseCode = "201", description = "Order placed successfully", 
             content = @Content(schema = @Schema(implementation = OrderResponse.class))),
         @ApiResponse(responseCode = "400", description = "Invalid order request", 
             content = @Content(schema = @Schema(implementation = TradingException.class),
@@ -75,7 +78,6 @@ public class TradingController {
     public ResponseEntity<OrderResponse> placeOrder(@RequestBody OrderRequest request) {
         validateOrderRequest(request);
         Order order = new Order(
-                request.traderId(),
                 request.instrumentId(),
                 request.type(),
                 request.price(),
@@ -83,7 +85,9 @@ public class TradingController {
         );
         List<Trade> trades = tradingService.placeOrder(order);
         String message = trades.isEmpty() ? "Order placed. No trades executed yet." : "Order matched and trades executed.";
-        return ResponseEntity.ok(new OrderResponse(order.getOrderId(), order.getStatus(), message));
+        return ResponseEntity
+            .created(URI.create("/api/trading/orders/" + order.getOrderId()))
+            .body(new OrderResponse(order.getOrderId(), order.getStatus(), message));
     }
 
     @Operation(summary = "Cancel an order", description = "Cancels an order by instrument and order ID.")
@@ -146,10 +150,11 @@ public class TradingController {
         return ResponseEntity.ok(new OrderBookResponse(orderBook.getBuyOrders(), orderBook.getSellOrders()));
     }
 
-    @Operation(summary = "Get all instruments", description = "Gets all registered financial instruments.")
+    @Operation(summary = "Get all instruments", description = "Gets all registered financial instruments with their current market prices.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "List of instruments returned", 
-            content = @Content(schema = @Schema(implementation = Instrument.class))),
+            content = @Content(schema = @Schema(implementation = Instrument.class),
+            examples = @ExampleObject(value = "[{\"id\": \"123e4567-e89b-12d3-a456-426614174000\", \"symbol\": \"AAPL\", \"marketPrice\": 150.00}, {\"id\": \"123e4567-e89b-12d3-a456-426614174001\", \"symbol\": \"GOOGL\", \"marketPrice\": 2800.00}]"))),
         @ApiResponse(responseCode = "500", description = "Internal server error",
             content = @Content(schema = @Schema(implementation = TradingException.class),
             examples = @ExampleObject(value = "{\"errorCode\": \"SYSTEM_ERROR\", \"message\": \"An unexpected error occurred\"}")))
@@ -169,6 +174,10 @@ public class TradingController {
                 "Order quantity must be greater than zero");
         }
     }
+
+    public record InstrumentRequest(
+            @Schema(description = "Symbol of the instrument", example = "BTC")
+            String symbol) {}
 
     public record CancelOrderResponse(
             @Schema(description = "Whether the order was cancelled", example = "true") boolean cancelled,
