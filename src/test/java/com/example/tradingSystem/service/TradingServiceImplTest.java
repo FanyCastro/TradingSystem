@@ -14,80 +14,80 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Unit tests for TradingService logic.
  */
-class TradingServiceTest {
-    private TradingService tradingService;
+class TradingServiceImplTest {
+    private TradingServiceImpl tradingServiceImpl;
     private Instrument instrument;
 
     @BeforeEach
     void setUp() {
-        tradingService = new TradingService();
+        tradingServiceImpl = new TradingServiceImpl();
         instrument = new Instrument("AAPL");
-        tradingService.registerInstrument(instrument);
+        tradingServiceImpl.registerInstrument(instrument);
     }
 
     @Test
     void testRegisterInstrument() {
-        assertTrue(tradingService.getAllInstruments().contains(instrument));
+        assertTrue(tradingServiceImpl.getAllInstruments().contains(instrument));
     }
 
     @Test
     void testPlaceOrderAndMatch() {
         Order buyOrder = new Order("trader1", instrument.getId(), Order.OrderType.BUY, new BigDecimal("110"), 10);
         Order sellOrder = new Order("trader2", instrument.getId(), Order.OrderType.SELL, new BigDecimal("100"), 10);
-        tradingService.placeOrder(buyOrder);
-        List<Trade> trades = tradingService.placeOrder(sellOrder);
+        tradingServiceImpl.placeOrder(buyOrder);
+        List<Trade> trades = tradingServiceImpl.placeOrder(sellOrder);
         assertEquals(1, trades.size());
-        assertEquals(0, tradingService.getOrderBook(instrument.getId()).getBuyOrders().size());
-        assertEquals(0, tradingService.getOrderBook(instrument.getId()).getSellOrders().size());
+        assertEquals(0, tradingServiceImpl.getOrderBook(instrument.getId()).getBuyOrders().size());
+        assertEquals(0, tradingServiceImpl.getOrderBook(instrument.getId()).getSellOrders().size());
     }
 
     @Test
     void testCancelOrder() {
         Order buyOrder = new Order("trader1", instrument.getId(), Order.OrderType.BUY, new BigDecimal("110"), 10);
-        tradingService.placeOrder(buyOrder);
-        boolean cancelled = tradingService.cancelOrder(instrument.getId(), buyOrder.getOrderId());
+        tradingServiceImpl.placeOrder(buyOrder);
+        boolean cancelled = tradingServiceImpl.cancelOrder(instrument.getId(), buyOrder.getOrderId());
         assertTrue(cancelled);
-        assertEquals(0, tradingService.getOrderBook(instrument.getId()).getBuyOrders().size());
+        assertEquals(0, tradingServiceImpl.getOrderBook(instrument.getId()).getBuyOrders().size());
     }
 
     @Test
     void testGetMarketPrice() {
         // Add orders directly to the order book to control the matching
-        var orderBook = tradingService.getOrderBook(instrument.getId());
+        var orderBook = tradingServiceImpl.getOrderBook(instrument.getId());
         Order buyOrder = new Order("trader1", instrument.getId(), Order.OrderType.BUY, new BigDecimal("110"), 10);
         Order sellOrder = new Order("trader2", instrument.getId(), Order.OrderType.SELL, new BigDecimal("100"), 10);
         orderBook.addOrder(buyOrder);
         orderBook.addOrder(sellOrder);
         // Update market price after adding orders
-        tradingService.getAllInstruments().forEach(i -> {
+        tradingServiceImpl.getAllInstruments().forEach(i -> {
             if (i.getId().equals(instrument.getId())) {
                 // Forcibly update market price
                 try {
-                    var method = tradingService.getClass().getDeclaredMethod("updateMarketPrice", String.class);
+                    var method = tradingServiceImpl.getClass().getDeclaredMethod("updateMarketPrice", String.class);
                     method.setAccessible(true);
-                    method.invoke(tradingService, instrument.getId());
+                    method.invoke(tradingServiceImpl, instrument.getId());
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }
         });
         // Check market price before matching
-        BigDecimal marketPrice = tradingService.getMarketPrice(instrument.getId());
+        BigDecimal marketPrice = tradingServiceImpl.getMarketPrice(instrument.getId());
         assertEquals(new BigDecimal("105"), marketPrice);
         // Now trigger matching and check that market price is 0 (no orders left)
         orderBook.matchOrders();
-        tradingService.getAllInstruments().forEach(i -> {
+        tradingServiceImpl.getAllInstruments().forEach(i -> {
             if (i.getId().equals(instrument.getId())) {
                 try {
-                    var method = tradingService.getClass().getDeclaredMethod("updateMarketPrice", String.class);
+                    var method = tradingServiceImpl.getClass().getDeclaredMethod("updateMarketPrice", String.class);
                     method.setAccessible(true);
-                    method.invoke(tradingService, instrument.getId());
+                    method.invoke(tradingServiceImpl, instrument.getId());
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }
         });
-        BigDecimal afterMatchPrice = tradingService.getMarketPrice(instrument.getId());
+        BigDecimal afterMatchPrice = tradingServiceImpl.getMarketPrice(instrument.getId());
         assertEquals(BigDecimal.ZERO, afterMatchPrice);
     }
 } 

@@ -1,6 +1,7 @@
 package com.example.tradingSystem.config;
 
 import com.example.tradingSystem.service.TradingService;
+import com.example.tradingSystem.service.TradingServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,6 +16,6 @@ public class TradingSystemConfig {
      */
     @Bean
     public TradingService tradingService() {
-        return new TradingService();
+        return new TradingServiceImpl();
     }
 } 
