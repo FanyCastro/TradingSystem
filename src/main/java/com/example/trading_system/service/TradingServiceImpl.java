@@ -7,7 +7,6 @@ import com.example.trading_system.model.Trade;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * TradingService orchestrates the trading logic for multiple instruments.

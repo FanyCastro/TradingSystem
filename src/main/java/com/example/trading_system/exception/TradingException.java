@@ -51,6 +51,9 @@ public class TradingException extends RuntimeException {
         INSUFFICIENT_RESOURCES,
         
         @Schema(description = "System is currently unavailable")
-        SYSTEM_ERROR
+        SYSTEM_ERROR,
+
+        @Schema(description = "Order queue is full and cannot accept more orders")
+        ORDER_QUEUE_FULL
     }
 }
