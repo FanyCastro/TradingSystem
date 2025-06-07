@@ -2,6 +2,7 @@ package com.example.trading_system.controller;
 
 import com.example.trading_system.model.Order;
 import com.example.trading_system.service.TradingService;
+import com.example.trading_system.dto.OrderResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -31,9 +32,13 @@ public class OrdersController {
             @ApiResponse(responseCode = "200", description = "Orders retrieved successfully"),
             @ApiResponse(responseCode = "400", description = "Trader ID is required")
     })
-    public ResponseEntity<List<Order>> getOrdersByTrader(
+    public ResponseEntity<List<OrderResponse>> getOrdersByTrader(
             @Parameter(description = "ID of the trader to get orders for", required = true)
             @RequestParam(required = true) String traderId) {
-        return ResponseEntity.ok(tradingService.getOrdersByTrader(traderId));
+        List<Order> orders = tradingService.getOrdersByTrader(traderId);
+        List<OrderResponse> orderResponses = orders.stream()
+                .map(OrderResponse::fromOrder)
+                .toList();
+        return ResponseEntity.ok(orderResponses);
     }
 } 

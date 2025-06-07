@@ -31,8 +31,8 @@ public class InMemoryOrderBook implements OrderBook{
     public InMemoryOrderBook(String instrumentId) {
         log.info("Initializing order book for instrument: {}", instrumentId);
         this.instrumentId = instrumentId;
-        this.tradeMatcher = new DefaultTradeMatcher();
-        this.marketPriceCalculator = new MidPriceCalculator();
+        this.tradeMatcher = new TradeMatcher();
+        this.marketPriceCalculator = new MarketPriceCalculator();
         // Buy orders: higher price first, then earlier timestamp
         this.buyOrders = new PriorityBlockingQueue<>(100, 
                 Comparator.comparing(Order::getPrice).reversed().thenComparing(Order::getTimestamp));
@@ -49,12 +49,10 @@ public class InMemoryOrderBook implements OrderBook{
         log.info("Adding order {} for instrument {}: type={}, price={}, quantity={}", 
             order.getOrderId(), instrumentId, order.getType(), order.getPrice(), order.getQuantity());
         
-        boolean added = false;
-        if (order.getType() == Order.OrderType.BUY) {
-            added = buyOrders.offer(order);
-        } else {
-            added = sellOrders.offer(order);
-        }
+        boolean added = switch (order.getType()) {
+            case BUY -> buyOrders.offer(order);
+            case SELL -> sellOrders.offer(order);
+        };
         
         if (!added) {
             log.error("Failed to add order {} to queue - queue is full", order.getOrderId());
@@ -85,12 +83,10 @@ public class InMemoryOrderBook implements OrderBook{
         log.debug("Order {} status set to CANCELLED", orderId);
 
         // Remove from the appropriate queue but keep in allOrders
-        boolean removed = false;
-        if (order.getType() == Order.OrderType.BUY) {
-            removed = buyOrders.remove(order);
-        } else {
-            removed = sellOrders.remove(order);
-        }
+        boolean removed = switch (order.getType()) {
+            case BUY -> buyOrders.remove(order);
+            case SELL -> sellOrders.remove(order);
+        };
         
         if (!removed) {
             log.warn("Order {} was already removed from queue", orderId);
@@ -120,15 +116,17 @@ public class InMemoryOrderBook implements OrderBook{
         List<Trade> tradeList = tradeMatcher.match(this, instrumentId);
         this.trades.addAll(tradeList);
         
-        if (!tradeList.isEmpty()) {
-            log.info("Matched {} trades for instrument {}", tradeList.size(), instrumentId);
-            tradeList.forEach(trade -> 
-                log.debug("Trade executed: {} - Buy: {}, Sell: {}, Price: {}, Quantity: {}", 
-                    trade.tradeId(), trade.buyOrderId(), trade.sellOrderId(), 
-                    trade.price(), trade.quantity()));
-        } else {
-            log.debug("No trades matched for instrument {}", instrumentId);
-        }
+        Optional.of(tradeList)
+            .filter(list -> !list.isEmpty())
+            .ifPresentOrElse(list -> {
+                log.info("Matched {} trades for instrument {}", list.size(), instrumentId);
+                list.forEach(trade -> 
+                    log.debug("Trade executed: {} - Buy: {}, Sell: {}, Price: {}, Quantity: {}", 
+                        trade.tradeId(), trade.buyOrderId(), trade.sellOrderId(), 
+                        trade.price(), trade.quantity()));
+            }, () -> {
+                log.debug("No trades matched for instrument {}", instrumentId);
+            });
         
         return tradeList;
     }
@@ -179,10 +177,10 @@ public class InMemoryOrderBook implements OrderBook{
     @Override
     public void removeOrder(Order order) {
         log.debug("Removing order {} from {} queue", order.getOrderId(), order.getType());
-        if (order.getType() == Order.OrderType.BUY) {
-            buyOrders.remove(order);
-        } else {
-            sellOrders.remove(order);
+        switch (order.getType()) {
+            case BUY -> buyOrders.remove(order);
+            case SELL -> sellOrders.remove(order);
+            default -> throw new IllegalArgumentException("Unknown order type: " + order.getType());
         }
     }
 }

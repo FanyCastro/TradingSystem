@@ -60,7 +60,9 @@ class OrdersControllerIT {
     @Test
     void testGetOrdersByTrader_missingTraderId_returnsBadRequest() throws Exception {
         mockMvc.perform(get("/api/trading/orders"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode", is("MISSING_REQUEST_PARAMETER")))
+                .andExpect(jsonPath("$.message", containsString("Required request parameter 'traderId' is missing")));
     }
 
     @Test

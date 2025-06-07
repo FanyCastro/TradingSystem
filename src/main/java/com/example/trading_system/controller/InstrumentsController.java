@@ -2,7 +2,7 @@ package com.example.trading_system.controller;
 
 import com.example.trading_system.dto.InstrumentRequest;
 import com.example.trading_system.dto.OrderRequest;
-import com.example.trading_system.dto.OrderResponse;
+import com.example.trading_system.dto.InstrumentOrderResponse;
 import com.example.trading_system.model.Instrument;
 import com.example.trading_system.model.Order;
 import com.example.trading_system.model.Trade;
@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -64,14 +65,14 @@ public class InstrumentsController {
         @ApiResponse(responseCode = "400", description = "Invalid order data"),
         @ApiResponse(responseCode = "404", description = "Instrument not found")
     })
-    public ResponseEntity<OrderResponse> placeOrder(
+    public ResponseEntity<InstrumentOrderResponse> placeOrder(
             @Parameter(description = "ID of the instrument to place the order for") 
             @PathVariable String id,
             @Valid @RequestBody OrderRequest request) {
         Order order = new Order(id, request.traderId(), request.type(), request.price(), request.quantity());
         List<Trade> trades = tradingService.placeOrder(order);
         return new ResponseEntity<>(
-            new OrderResponse(order.getOrderId(), order.getStatus(), trades),
+            new InstrumentOrderResponse(order.getOrderId(), order.getStatus(), trades),
             HttpStatus.CREATED
         );
     }
@@ -86,7 +87,7 @@ public class InstrumentsController {
             @Parameter(description = "ID of the instrument")
             @PathVariable String id,
             @Parameter(description = "ID of the order to cancel")
-            @PathVariable String orderId) {
+            @PathVariable @Pattern(regexp = "^[a-zA-Z0-9\\-]{1,36}$") String orderId) {
         tradingService.cancelOrder(id, orderId);
         return ResponseEntity.ok().build();
     }
