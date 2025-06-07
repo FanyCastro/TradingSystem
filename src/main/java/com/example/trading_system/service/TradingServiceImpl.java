@@ -96,6 +96,6 @@ public class TradingServiceImpl implements TradingService {
             .filter(Objects::nonNull)
             .flatMap(orderBook -> orderBook.getAllOrders().values().stream())
             .filter(order -> order.getTraderId().equals(traderId))
-            .collect(Collectors.toList());
+            .toList();
     }
 }

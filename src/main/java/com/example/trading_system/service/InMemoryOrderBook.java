@@ -77,7 +77,9 @@ public class InMemoryOrderBook implements OrderBook{
 
     @Override
     public List<Trade> matchOrders() {
-        return tradeMatcher.match(this, instrumentId);
+        List<Trade> tradeList = tradeMatcher.match(this, instrumentId);
+        this.trades.addAll(tradeList);
+        return tradeList;
     }
 
     @Override
