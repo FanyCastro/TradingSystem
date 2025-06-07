@@ -17,25 +17,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Unit tests for TradingService logic.
  */
-class TradingServiceTest {
+class TradingServiceImplTest {
     private TradingService tradingService;
+
+    Instrument instrument = new Instrument("AAPL");
 
     @BeforeEach
     void setUp() {
         tradingService = new TradingServiceImpl();
+
+        tradingService.registerInstrument(instrument);
     }
 
     @Test
     void testRegisterInstrument() {
-        Instrument instrument = new Instrument("AAPL");
-        tradingService.registerInstrument(instrument);
         assertTrue(tradingService.getAllInstruments().contains(instrument));
     }
 
     @Test
     void testPlaceOrderAndMatch() {
-        Instrument instrument = new Instrument("AAPL");
-        tradingService.registerInstrument(instrument);
         Order buyOrder = new Order(instrument.getId(), "trader1", Order.OrderType.BUY, new BigDecimal("110"), 10);
         Order sellOrder = new Order(instrument.getId(), "trader2", Order.OrderType.SELL, new BigDecimal("100"), 10);
         
@@ -49,60 +49,56 @@ class TradingServiceTest {
 
     @Test
     void testCancelOrder() {
-        Instrument instrument = new Instrument("AAPL");
-        tradingService.registerInstrument(instrument);
         Order buyOrder = new Order(instrument.getId(), "trader1", Order.OrderType.BUY, new BigDecimal("110"), 10);
 
         tradingService.placeOrder(buyOrder);
 
-        boolean cancelled = tradingService.cancelOrder(instrument.getId(), buyOrder.getOrderId());
-        assertTrue(cancelled);
+        tradingService.cancelOrder(instrument.getId(), buyOrder.getOrderId());
         assertEquals(0, tradingService.getOrderBook(instrument.getId()).getBuyOrders().size());
     }
 
     @Test
-    void testGetMarketPrice() {
-        // Add orders directly to the order book to control the matching
-        Instrument instrument = new Instrument("AAPL");
-        tradingService.registerInstrument(instrument);
-        var orderBook = tradingService.getOrderBook(instrument.getId());
-        Order buyOrder = new Order(instrument.getId(), "trader1", Order.OrderType.BUY, new BigDecimal("110"), 10);
+    void testGetMarketPrice_shouldReturnZeroAfterMatching() {
+        // After matching - should return zero as all orders are filled
+        Order sellOrder = new Order(instrument.getId(), "trader2", Order.OrderType.SELL, new BigDecimal("50"), 4);
+        tradingService.placeOrder(sellOrder);
+        Order buyOrder = new Order(instrument.getId(), "trader1", Order.OrderType.BUY, new BigDecimal("60"), 4);
+        tradingService.placeOrder(buyOrder);
+        assertEquals(BigDecimal.ZERO, tradingService.getMarketPrice(instrument.getId()));
+    }
+
+    @Test
+    void testGetMarketPrice_shouldReturnZeroWhenNoOrders() {
+        // No orders - should return zero
+        // TODO - review this test
+        assertEquals(BigDecimal.ZERO, tradingService.getMarketPrice(instrument.getId()));
+    }
+
+    @Test
+    void testGetMarketPrice_shouldReturnZeroWithOnlySellOrder() {
+        // Only buy order - should return 0 (as we don't have best sell price)
         Order sellOrder = new Order(instrument.getId(), "trader2", Order.OrderType.SELL, new BigDecimal("100"), 10);
-        orderBook.addOrder(buyOrder);
-        orderBook.addOrder(sellOrder);
-        // Update market price after adding orders
-        tradingService.getAllInstruments().forEach(i -> {
-            if (i.getId().equals(instrument.getId())) {
-                // Forcibly update market price
-                try {
-                    var method = tradingService.getClass().getDeclaredMethod("updateMarketPrice", String.class);
-                    method.setAccessible(true);
-                    method.invoke(tradingService, instrument.getId());
-                } catch (Exception e) {
-                    throw new TradingException(TradingException.ErrorCode.SYSTEM_ERROR.name(),
-                        "Failed to update market price: " + e.getMessage());
-                }
-            }
-        });
-        // Check market price before matching
-        BigDecimal marketPrice = tradingService.getMarketPrice(instrument.getId());
-        assertEquals(new BigDecimal("105"), marketPrice);
-        // Now trigger matching and check that market price is 0 (no orders left)
-        orderBook.matchOrders();
-        tradingService.getAllInstruments().forEach(i -> {
-            if (i.getId().equals(instrument.getId())) {
-                try {
-                    var method = tradingService.getClass().getDeclaredMethod("updateMarketPrice", String.class);
-                    method.setAccessible(true);
-                    method.invoke(tradingService, instrument.getId());
-                } catch (Exception e) {
-                    throw new TradingException(TradingException.ErrorCode.SYSTEM_ERROR.name(),
-                        "Failed to update market price: " + e.getMessage());
-                }
-            }
-        });
-        BigDecimal afterMatchPrice = tradingService.getMarketPrice(instrument.getId());
-        assertEquals(BigDecimal.ZERO, afterMatchPrice);
+        tradingService.placeOrder(sellOrder);
+        assertEquals(BigDecimal.ZERO, tradingService.getMarketPrice(instrument.getId()));
+    }
+
+    @Test
+    void testGetMarketPrice_ShouldReturnZeroWithOnlyBuyOrder() {
+        // Only buy order - should return 0 (as we don't have best sell price)
+        Order buyOrder = new Order(instrument.getId(), "trader1", Order.OrderType.BUY, new BigDecimal("110"), 10);
+        tradingService.placeOrder(buyOrder);
+        assertEquals(BigDecimal.ZERO, tradingService.getMarketPrice(instrument.getId()));
+    }
+
+    @Test
+    void testGetMarketPrice_shouldReturnCalcWithSellAndBuyOrder() {
+        // Both buy and sell orders - should return average
+        Order sellOrder = new Order(instrument.getId(), "trader2", Order.OrderType.SELL, new BigDecimal("100"), 2);
+        tradingService.placeOrder(sellOrder);
+        Order buyOrder = new Order(instrument.getId(), "trader1", Order.OrderType.BUY, new BigDecimal("80"), 5);
+        tradingService.placeOrder(buyOrder);
+
+        assertEquals(new BigDecimal("90"), tradingService.getMarketPrice(instrument.getId()));
     }
 
     @Test
@@ -117,7 +113,7 @@ class TradingServiceTest {
         tradingService.registerInstrument(instrument3);
         
         Collection<Instrument> instruments = tradingService.getAllInstruments();
-        assertEquals(3, instruments.size());
+        assertEquals(4, instruments.size());
         assertTrue(instruments.contains(instrument1));
         assertTrue(instruments.contains(instrument2));
         assertTrue(instruments.contains(instrument3));

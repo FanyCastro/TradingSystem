@@ -85,6 +85,23 @@ public class Order {
         return timestamp;
     }
 
+    public void execute(int amount) {
+        if (amount > quantity) {
+            throw new IllegalArgumentException("Executed amount exceeds remaining quantity");
+        }
+        this.quantity -= amount;
+
+        if (this.quantity == 0) {
+            this.status = OrderStatus.FILLED;
+        } else {
+            this.status = OrderStatus.PARTIALLY_FILLED;
+        }
+    }
+
+    public boolean isFilled() {
+        return this.status == OrderStatus.FILLED;
+    }
+
     @Schema(description = "Order type: BUY or SELL")
     public enum OrderType {
         BUY,

@@ -28,7 +28,7 @@ public interface TradingService {
      * @param orderId The order ID to cancel.
      * @return true if cancelled, false otherwise.
      */
-    boolean cancelOrder(String instrumentId, String orderId);
+    void cancelOrder(String instrumentId, String orderId);
 
     /**
      * Gets the current market price for an instrument (mid price between best buy and sell).
@@ -39,10 +39,11 @@ public interface TradingService {
 
     /**
      * Gets the order book for an instrument.
+     *
      * @param instrumentId The instrument ID.
      * @return The OrderBook, or null if not found.
      */
-    OrderBookImpl getOrderBook(String instrumentId);
+    OrderBook getOrderBook(String instrumentId);
 
     /**
      * Gets all registered instruments.

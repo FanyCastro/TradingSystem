@@ -6,7 +6,7 @@ import com.example.trading_system.dto.OrderResponse;
 import com.example.trading_system.model.Instrument;
 import com.example.trading_system.model.Order;
 import com.example.trading_system.model.Trade;
-import com.example.trading_system.service.OrderBookImpl;
+import com.example.trading_system.service.OrderBook;
 import com.example.trading_system.service.TradingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -112,10 +112,10 @@ public class InstrumentsController {
     public ResponseEntity<Map<String, List<Order>>> getOrderBook(
             @Parameter(description = "ID of the instrument to get order book for")
             @PathVariable String id) {
-        OrderBookImpl orderBookImpl = tradingService.getOrderBook(id);
+        OrderBook orderBook = tradingService.getOrderBook(id);
         Map<String, List<Order>> response = new HashMap<>();
-        response.put("buyOrders", orderBookImpl.getBuyOrders());
-        response.put("sellOrders", orderBookImpl.getSellOrders());
+        response.put("buyOrders", orderBook.getBuyOrders());
+        response.put("sellOrders", orderBook.getSellOrders());
         return ResponseEntity.ok(response);
     }
 }
