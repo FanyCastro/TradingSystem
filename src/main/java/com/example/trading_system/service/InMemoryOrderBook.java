@@ -6,12 +6,15 @@ import com.example.trading_system.model.Trade;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.PriorityBlockingQueue;
 
 public class InMemoryOrderBook implements OrderBook{
     // Priority queue for buy orders: highest price first, then earliest timestamp
-    private final PriorityQueue<Order> buyOrders;
+    private final PriorityBlockingQueue<Order> buyOrders;
     // Priority queue for sale orders: lowest price first, then earliest timestamp
-    private final PriorityQueue<Order> sellOrders;
+    private final PriorityBlockingQueue<Order> sellOrders;
     // Map to quickly find and cancel orders by ID
     private final Map<String, Order> allOrders;
     // List of executed trades
@@ -26,13 +29,13 @@ public class InMemoryOrderBook implements OrderBook{
         this.tradeMatcher = new DefaultTradeMatcher();
         this.marketPriceCalculator = new MidPriceCalculator();
         // Buy orders: higher price first, then earlier timestamp
-        this.buyOrders = new PriorityQueue<>(
+        this.buyOrders = new PriorityBlockingQueue<>(100, 
                 Comparator.comparing(Order::getPrice).reversed().thenComparing(Order::getTimestamp));
         // Sell orders: lower price first, then earlier timestamp
-        this.sellOrders = new PriorityQueue<>(
+        this.sellOrders = new PriorityBlockingQueue<>(100,
                 Comparator.comparing(Order::getPrice).thenComparing(Order::getTimestamp));
-        this.allOrders = new HashMap<>();
-        this.trades = new ArrayList<>();
+        this.allOrders = new ConcurrentHashMap<>();
+        this.trades = new CopyOnWriteArrayList<>();
     }
 
 

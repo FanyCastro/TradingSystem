@@ -1,11 +1,10 @@
 package com.example.trading_system.service;
 
-import com.example.trading_system.exception.TradingException;
 import com.example.trading_system.model.Instrument;
 import com.example.trading_system.model.Order;
 import com.example.trading_system.model.Trade;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

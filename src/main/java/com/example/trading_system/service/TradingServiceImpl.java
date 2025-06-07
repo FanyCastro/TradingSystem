@@ -6,7 +6,6 @@ import com.example.trading_system.model.Order;
 import com.example.trading_system.model.Trade;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -49,11 +48,6 @@ public class TradingServiceImpl implements TradingService {
             }
         });
 
-//        updateMarketPrice(order.getInstrumentId());
-//        List<Trade> trades = orderBookImpl.matchOrders();
-//        if (!trades.isEmpty()) {
-//            updateMarketPrice(order.getInstrumentId());
-//        }
         return trades;
     }
 

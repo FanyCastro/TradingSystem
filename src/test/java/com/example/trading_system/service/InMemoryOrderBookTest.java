@@ -1,14 +1,15 @@
 package com.example.trading_system.service;
 
+import com.example.trading_system.exception.TradingException;
 import com.example.trading_system.model.Order;
 import com.example.trading_system.model.Trade;
-import com.example.trading_system.exception.TradingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+import static com.example.trading_system.model.Order.OrderStatus.CANCELLED;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -142,7 +143,7 @@ class InMemoryOrderBookTest {
         orderBook.addOrder(order);
         
         orderBook.cancelOrder(order.getOrderId());
-        assertEquals(Order.OrderStatus.CANCELLED, order.getStatus());
+        assertEquals(CANCELLED, order.getStatus());
         assertTrue(orderBook.getBuyOrders().isEmpty());
         
         // Verify order is still in allOrders but not in active queues
@@ -161,9 +162,17 @@ class InMemoryOrderBookTest {
     void testCancelOrder_alreadyCancelled() {
         Order order = new Order(INSTRUMENT_ID, TRADER_1, Order.OrderType.BUY, BigDecimal.valueOf(100), 10);
         orderBook.addOrder(order);
-        
-//        assertTrue(orderBook.cancelOrder(order.getOrderId()));
-//        assertFalse(orderBook.cancelOrder(order.getOrderId())); // Second cancellation should fail
+
+        assertTrue(orderBook.getBuyOrders().contains(order));
+        orderBook.cancelOrder(order.getOrderId());
+
+        Order orderFound = orderBook.getAllOrders().values().stream()
+                .filter(item -> item.getOrderId().equals(order.getOrderId()))
+                .findFirst().get();
+        assertSame(CANCELLED, orderFound.getStatus());
+        assertFalse(orderBook.getBuyOrders().contains(order));
+        orderBook.cancelOrder(order.getOrderId());
+        assertSame(CANCELLED, orderFound.getStatus());
     }
 
     @Test
@@ -178,7 +187,7 @@ class InMemoryOrderBookTest {
         
         List<Trade> trades = orderBook.matchOrders();
         assertTrue(trades.isEmpty());
-        assertEquals(Order.OrderStatus.CANCELLED, buyOrder.getStatus());
+        assertEquals(CANCELLED, buyOrder.getStatus());
         assertEquals(Order.OrderStatus.OPEN, sellOrder.getStatus());
     }
 

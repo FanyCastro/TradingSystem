@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class DefaultTradeMatcher implements TradeMatcher {
     @Override
@@ -14,47 +15,63 @@ public class DefaultTradeMatcher implements TradeMatcher {
         List<Trade> trades = new ArrayList<>();
 
         while (orderBook.hasMatchingOrders()) {
-            Order buyOrder = orderBook.getBestBuyOrder().get();
-            Order sellOrder = orderBook.getBestSellOrder().get();
+            Optional<Order> buyOrderOpt = orderBook.getBestBuyOrder();
+            Optional<Order> sellOrderOpt = orderBook.getBestSellOrder();
+            
+            if (!buyOrderOpt.isPresent() || !sellOrderOpt.isPresent()) break;
+            
+            Order buyOrder = buyOrderOpt.get();
+            Order sellOrder = sellOrderOpt.get();
 
-            // Skip cancelled orders
-            if (buyOrder.getStatus() == Order.OrderStatus.CANCELLED || buyOrder.getQuantity() == 0) {
-                orderBook.removeOrder(buyOrder);
+            if (shouldSkipOrder(buyOrder, orderBook) || shouldSkipOrder(sellOrder, orderBook)) {
                 continue;
             }
-            if (sellOrder.getStatus() == Order.OrderStatus.CANCELLED || sellOrder.getQuantity() == 0) {
-                orderBook.removeOrder(sellOrder);
-                continue;
+
+            if (!canMatch(buyOrder, sellOrder)) {
+                break;
             }
 
-            if (buyOrder.getPrice().compareTo(sellOrder.getPrice()) >= 0 &&
-                    !buyOrder.getTraderId().equals(sellOrder.getTraderId())) {
-                int executedQuantity = Math.min(buyOrder.getQuantity(), sellOrder.getQuantity());
-                BigDecimal executionPrice = sellOrder.getPrice(); // Use the sell price as the trade price
-
-                // Create trade
-                String tradeId = java.util.UUID.randomUUID().toString();
-                LocalDateTime timestamp = java.time.LocalDateTime.now();
-                Trade trade = new Trade(tradeId, buyOrder.getOrderId(), sellOrder.getOrderId(),
-                        instrumentId, executionPrice, executedQuantity, timestamp);
-                trades.add(trade);
-
-                // Actualizar las órdenes
-                buyOrder.execute(executedQuantity);
-                sellOrder.execute(executedQuantity);
-
-                // Eliminar órdenes completadas del libro
-                if (buyOrder.isFilled()) {
-                    orderBook.removeOrder(buyOrder);
-                }
-                if (sellOrder.isFilled()) {
-                    orderBook.removeOrder(sellOrder);
-                }
-            } else {
-                break; // No hay más órdenes que puedan emparejarse
-            }
+            Trade trade = createTrade(buyOrder, sellOrder, instrumentId);
+            trades.add(trade);
+            updateOrders(buyOrder, sellOrder, orderBook);
         }
 
         return trades;
+    }
+
+    private boolean shouldSkipOrder(Order order, OrderBook orderBook) {
+        if (order.getStatus() == Order.OrderStatus.CANCELLED || order.getQuantity() == 0) {
+            orderBook.removeOrder(order);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean canMatch(Order buyOrder, Order sellOrder) {
+        return buyOrder.getPrice().compareTo(sellOrder.getPrice()) >= 0 
+            && !buyOrder.getTraderId().equals(sellOrder.getTraderId());
+    }
+
+    private Trade createTrade(Order buyOrder, Order sellOrder, String instrumentId) {
+        int executedQuantity = Math.min(buyOrder.getQuantity(), sellOrder.getQuantity());
+        BigDecimal executionPrice = sellOrder.getPrice();
+        String tradeId = java.util.UUID.randomUUID().toString();
+        LocalDateTime timestamp = java.time.LocalDateTime.now();
+        
+        return new Trade(tradeId, buyOrder.getOrderId(), sellOrder.getOrderId(),
+                instrumentId, executionPrice, executedQuantity, timestamp);
+    }
+
+    private void updateOrders(Order buyOrder, Order sellOrder, OrderBook orderBook) {
+        int executedQuantity = Math.min(buyOrder.getQuantity(), sellOrder.getQuantity());
+        buyOrder.execute(executedQuantity);
+        sellOrder.execute(executedQuantity);
+
+        if (buyOrder.isFilled()) {
+            orderBook.removeOrder(buyOrder);
+        }
+        if (sellOrder.isFilled()) {
+            orderBook.removeOrder(sellOrder);
+        }
     }
 }
